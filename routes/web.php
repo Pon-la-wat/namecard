@@ -19,6 +19,6 @@ use App\Http\Controllers\NamecardController;
 Auth::routes();
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::post('/settings/{username}/upload', [SettingController::class, 'upload'])->name('settings.upload');
 Route::resource('/settings', \SettingController::class)->shallow();
-
 Route::resource('/namecards', \NamecardController::class)->shallow();

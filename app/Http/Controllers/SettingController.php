@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use App\User;
+use Validator;
 
 class SettingController extends Controller
 {
@@ -13,7 +16,11 @@ class SettingController extends Controller
      */
     public function index()
     {
-        return view('setting');
+        $user = Auth::user();
+
+        return view('setting')->with([
+            'user'     =>   $user
+        ]);
     }
 
     /**
@@ -34,7 +41,20 @@ class SettingController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $update = [];
+        unset($request['_token']);
+        foreach ($request->all() as $key => $value) {
+            if(isset($value)){
+                $update[$key] = $value;
+            }
+        }
+
+        // dd($update);
+        $user = User::updateOrInsert(
+            ['username' => $request->username], $update
+        );
+
+        return redirect()->route('settings.index');
     }
 
     /**
@@ -81,5 +101,25 @@ class SettingController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+    public function upload(Request $request, $username)
+    {
+        $path = public_path('imgs/profiles');
+        $validator = Validator::make($request->all(), [
+            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
+        ]);
+
+        if($validator->passes()){
+            $imageName = time().'.'.request()->avatar->getClientOriginalExtension();
+
+            $user = User::find($username);
+            $user->avatar = $imageName;
+            $user->save();
+            $request->avatar->move($path, $imageName);
+            return ['S'];
+        }else{
+            return ['E'];
+        }
     }
 }

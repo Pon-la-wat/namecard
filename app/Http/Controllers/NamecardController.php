@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\User;
 
 class NamecardController extends Controller
 {
@@ -45,7 +46,10 @@ class NamecardController extends Controller
      */
     public function show($id)
     {
-        return view('namecard');
+        $user = User::find($id);
+        return view('namecard')->with([
+            'user'   =>   $user
+        ]);
     }
 
     /**

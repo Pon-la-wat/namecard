@@ -3,7 +3,6 @@
     @extends('layouts.navbar')
 @endsection
 @section('content')
-<script src="{{ asset('js/qrcode.min.js') }}"></script>
 <style>
     * {
         font-family: 'Montserrat';
@@ -28,11 +27,16 @@
         text-shadow: 0 0 5px white;
     }
 
+    .avatar {
+        position: relative;
+        top: -30%;
+        z-index: 1;
+    }
+
     .avatar-img {
         width: 190px;
         height: 190px;
         position: relative;
-        top: -31%;
     }
 
     .tab {
@@ -49,7 +53,7 @@
         border-radius: 30px 30px 0 0;
         background: #F5F5F5;
         box-shadow: 0px 2px 14px rgba(0, 0, 0, 0.2);
-        z-index: -1;
+        /* z-index: -1; */
     }
 
     .content {
@@ -73,13 +77,21 @@
         width: 100%;
     }
 
-    .setting {
+    .setting, .view {
         position: relative;
     }
 
     .setting > a {
         position: absolute;
         right: 0%;
+        margin-top: 31px;
+        cursor: pointer;
+        z-index: 1;
+    }
+
+    .view > a {
+        position: absolute;
+        right: 35px;
         margin-top: 31px;
         cursor: pointer;
         z-index: 1;
@@ -108,8 +120,26 @@
         width: 100%;
         transform: translate(-50%, -50%);
     }
+
+    .save {
+        font-size: 12px;
+        font-weight: 500;
+        color: #36383D;
+    }
+
+    .group-save {
+        width: 50px;
+        margin: auto;
+    }
+
+    #qrcode {
+        border: 2px solid #36383D;
+    }
 </style>
 <div class="container">
+    {{-- <div class="view">
+        <a href="{{ route('settings.index') }}" style="font-size: 20px"><i class="fas fa-eye text-black-50"></i></a>
+    </div> --}}
     <div class="setting">
         <a href="{{ route('settings.index') }}" style="font-size: 20px"><i class="fas fa-cog text-black-50"></i></a>
     </div>
@@ -125,34 +155,60 @@
         <div class="col text-center tab">
             <div class="hero-image">
                 <div class="hero-text">
+                    @php
+                        if($user->company == 'a1a'){
+                            $company = 'Alliance One Apparel (Vietnam)';
+                            $address = 'B1, B2, B5-B12 Giao Long Industrial Park, An Phuoc Commune, Chau Thanh District, Ben Tre Province, Vietnam';
+                        }else if ($user->company == 'trax apparel') {
+                            $company = 'Trax Apparel (Cambodia)';
+                            $address = 'No. 1, Russian Federation Boulevard, Sangkat Tuk Thla Khan Sen Sok Phnom Penh 12102 Cambodia';
+                        }else{
+                            $company = 'Trax Intertrade (Roiet)';
+                            $address = '61 Moo 5 Tumbon Junghan Ampur Jungharn Roi-et 45270 Thailand';
+                        }
+                    @endphp
                     <div class="txt-head text-center">Profile</div><br>
-                    <div class="txt-company my-2">Trax Intertrade Group</div>
+                    <div class="txt-company my-2">{{ $company }}</div>
                 </div>
             </div>
 
             <span class="avatar avatar-sm justify-content-center">
-                <img src="{{ asset('imgs/avatar.png') }}" alt="..." class="avatar-img rounded-circle">
+                <img src="{{ asset('imgs/profiles/'.(isset($user->avatar) ? $user->avatar : 'avatar.jpg')) }}" alt="..." class="avatar-img rounded-circle">
             </span>
 
             <div class="box">
                 <div class="content">
                     <div class="section1">
-                        <h3>Firstname Lastname</h3>
-                        <span>Department</span>
+                        @php
+                            $ex_fullname = explode(" ", $user->fullname_en);
+                        @endphp
+                        <h3>{{ ucfirst($ex_fullname[0]).' '.ucfirst($ex_fullname[1]) }}</h3>
+                        <span>{{ $user->department->dept_name_en.' ( '. ucfirst($user->position).' )' }}</span>
                     </div>
-                    <div class="section2 pt-4 pb-2">
-                        <div id="qrcode"></div>
+                    <div class="section2 pt-4">
+                        @php
+                            $qrcode = base64_encode(QrCode::format('png')->backgroundColor(255, 255, 255)->margin(4)->size(170)->generate(url()->current().'/namecards/'.$user->username));
+                        @endphp
+                        <img src="data:image/png;base64, {!! $qrcode !!}" class="mb-3" id="qrcode">
+                        <br>
+                        <div class="group-save">
+                            <a href="data:image/png;base64, {!! $qrcode !!}" class="save" download="qrcode.png">
+                                <i class="fa-solid fa-arrow-down" style="font-size: 20px"></i><br>
+                                <p class="mt-1 mb-0">Save</p>
+                            </a>
+                        </div>
                     </div>
-                    <div class="text-center">
+                    <div class="section3">
                         <div class="contact">
                             <p>
-                                <b>Tel: </b><span>905 845 0024</span><br>
-                                <b>Email: </b><span>trax.inter@libgroup.co.th</span><br>
-                                <b>Skype ID: </b><span>trax</span><br>
-                                <b>Line ID: </b><span>trax</span>
+                                <b>Phone: </b><span id="phone">{{ $user->phone == null ? '-' : $user->phone }}</span><br>
+                                <b>Email: </b><span>{{ $user->email == null ? '-' : $user->email }}</span><br>
+                                <b>Line ID: </b><span>{{ $user->line == null ? '-' : $user->line }}</span><br>
+                                <b>Skype ID: </b><span>{{ $user->skype == null ? '-' : $user->skype }}</span>
                             </p>
                             <p class="address">
-                                <span>137/47 Soi Ladprao 41, Ladprao Rd., Chandarakasem, Jatujak, Bangkok 10900</span>
+                                <b>{{ $company }}</b><br>
+                                <span>{{ $address }}</span>
                             </p>
                         </div>
                     </div>
@@ -162,22 +218,14 @@
     </div>
 </div>
 <script>
-    var qr_number = '0123456';
-    var qr_id = document.getElementById("qrcode");
-    var qrcode = new QRCode(qr_id, {
-        text: qr_number,
-        width: 120,
-        height: 120,
-        colorDark : "#000000",  // สี qrcode ดำ
-        colorLight : "#ffffff", // สีพื้นหลัง ขาว
-        typeNumber : 4,  // จำนวนกำหนด byte ข้อมูลที่รองรับ 1 - 40
-        correctLevel : QRCode.CorrectLevel.H
-    });
+    function formatPhoneNumberWithTimezone(phoneNumber, timezone) {
+        phoneNumber = phoneNumber.replace(/\D/g, '');
+        return phoneNumber = phoneNumber.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+    }
 
-    // append number qrcode
-    // const qr_text = document.createElement('p');
-    // qr_text.innerText = qr_number;
-    // qr_id.appendChild(qr_text);
+    const phone = document.getElementById('phone').innerText;
+    const formattedPhoneNumber = formatPhoneNumberWithTimezone(phone, 'Asia/Bangkok');
+    document.getElementById('phone').innerText = formattedPhoneNumber;
 </script>
 @endsection
 
